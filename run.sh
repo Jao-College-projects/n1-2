@@ -21,7 +21,7 @@ trap cleanup SIGINT EXIT
 # Frontend
 # ==========================================
 echo -e "\n${BLUE}[Frontend]${NC} Preparando ambiente..."
-cd front
+cd apps/web
 
 # Instala as dependências se a pasta node_modules não existir
 if [ ! -d "node_modules" ]; then

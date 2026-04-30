@@ -1,5 +1,7 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "../lib/supabase";
+import { buscarProdutos, criarProduto, editarProduto, excluirProduto } from "../services/produtos";
+import { finalizarPedido } from "../services/pedidos";
 import {
   ICredenciaisLogin,
   IFormularioCadastro,
@@ -98,27 +100,20 @@ export function LojaProvider({ children }: { children: React.ReactNode }): JSX.E
     async function loadData() {
       setIsLoading(true);
       try {
-        const [prodResult, depoResult, homeResult] = await Promise.all([
-          supabase.from('produtos').select('*').order('id', { ascending: false }),
+        const [listaProdutos, depoResult, homeResult] = await Promise.all([
+          buscarProdutos().catch((err) => {
+            console.error("API produtos (Java):", err);
+            return [] as IProduto[];
+          }),
           supabase.from('depoimentos').select('*').order('id', { ascending: false }),
           supabase.from('secoes_home').select('*').eq('ativo', true),
         ]);
 
         const imageUrls: string[] = [];
 
-        if (prodResult.data) {
-          setProdutos(prodResult.data.map((p: any) => ({
-            id: p.id,
-            nome: p.nome,
-            categoria: p.categoria,
-            descricaoCurta: p.descricao_curta,
-            descricaoLonga: p.descricao_longa,
-            preco: Number(p.preco),
-            estoque: p.estoque,
-            imagem: p.imagem,
-            destaqueCarrossel: p.destaque_carrossel
-          })));
-          prodResult.data.forEach((p: any) => { if (p.imagem) imageUrls.push(p.imagem); });
+        if (listaProdutos.length > 0) {
+          setProdutos(listaProdutos);
+          listaProdutos.forEach((p) => { if (p.imagem) imageUrls.push(p.imagem); });
         }
 
         if (depoResult.data) {
@@ -199,53 +194,23 @@ export function LojaProvider({ children }: { children: React.ReactNode }): JSX.E
   }, []);
 
   const adicionarProduto = useCallback(async (novoProduto: Omit<IProduto, "id">) => {
-    const { data, error } = await supabase.from('produtos').insert([{
-      nome: novoProduto.nome,
-      categoria: novoProduto.categoria,
-      descricao_curta: novoProduto.descricaoCurta,
-      descricao_longa: novoProduto.descricaoLonga,
-      preco: novoProduto.preco,
-      estoque: novoProduto.estoque,
-      imagem: novoProduto.imagem,
-      destaque_carrossel: novoProduto.destaqueCarrossel || false
-    }]).select('*').single();
-
-    if (!error && data) {
-      setProdutos(prev => [{
-        id: data.id,
-        nome: data.nome,
-        categoria: data.categoria,
-        descricaoCurta: data.descricao_curta,
-        descricaoLonga: data.descricao_longa,
-        preco: Number(data.preco),
-        estoque: data.estoque,
-        imagem: data.imagem,
-        destaqueCarrossel: data.destaque_carrossel
-      }, ...prev]);
+    const data = await criarProduto(novoProduto);
+    if (data) {
+      setProdutos((prev) => [data, ...prev]);
     }
   }, []);
 
   const atualizarProduto = useCallback(async (produtoAtualizado: IProduto) => {
-    const { error } = await supabase.from('produtos').update({
-      nome: produtoAtualizado.nome,
-      categoria: produtoAtualizado.categoria,
-      descricao_curta: produtoAtualizado.descricaoCurta,
-      descricao_longa: produtoAtualizado.descricaoLonga,
-      preco: produtoAtualizado.preco,
-      estoque: produtoAtualizado.estoque,
-      imagem: produtoAtualizado.imagem,
-      destaque_carrossel: produtoAtualizado.destaqueCarrossel || false
-    }).eq('id', produtoAtualizado.id);
-
-    if (!error) {
-      setProdutos(prev => prev.map(p => p.id === produtoAtualizado.id ? produtoAtualizado : p));
+    const ok = await editarProduto(produtoAtualizado);
+    if (ok) {
+      setProdutos((prev) => prev.map((p) => (p.id === produtoAtualizado.id ? produtoAtualizado : p)));
     }
   }, []);
 
   const removerProduto = useCallback(async (produtoId: number) => {
-    const { error } = await supabase.from('produtos').delete().eq('id', produtoId);
-    if (!error) {
-      setProdutos(prev => prev.filter(p => p.id !== produtoId));
+    const ok = await excluirProduto(produtoId);
+    if (ok) {
+      setProdutos((prev) => prev.filter((p) => p.id !== produtoId));
     }
   }, []);
 
@@ -342,47 +307,19 @@ export function LojaProvider({ children }: { children: React.ReactNode }): JSX.E
   const criarPedido = useCallback(async (dados: IPedidoDados): Promise<void> => {
     const { data: { session } } = await supabase.auth.getSession();
 
-    const { data: pedido, error: pedidoError } = await supabase
-      .from('pedidos')
-      .insert([{
-        usuario_id: session?.user?.id ?? null,
-        status: 'carrinho',
-        total: itensCarrinho.reduce((acc, item) => {
-          const p = produtos.find(x => x.id === item.produtoId);
-          return p ? acc + p.preco * item.quantidade : acc;
-        }, 0),
-        dados_entrega: dados,
-      }])
-      .select('id')
-      .single();
-
-    if (pedidoError || !pedido) throw new Error(pedidoError?.message ?? 'Erro ao criar pedido');
-
-    const itensPedido = itensCarrinho.map(item => {
-      const produto = produtos.find(p => p.id === item.produtoId);
-      return {
-        pedido_id: pedido.id,
-        produto_id: item.produtoId,
-        quantidade: item.quantidade,
-        preco_unitario: produto?.preco ?? 0,
-      };
+    await finalizarPedido({
+      usuarioId: session?.user?.id ?? null,
+      itens: itensCarrinho,
+      produtos,
+      dadosEntrega: dados,
     });
 
-    const { error: itensError } = await supabase.from('itens_pedido').insert(itensPedido);
-    if (itensError) throw new Error(itensError.message);
-
-    // Diminui o estoque de cada produto comprado
-    await Promise.all(
-      itensCarrinho.map(async (item) => {
-        const produto = produtos.find(p => p.id === item.produtoId);
-        if (!produto) return;
-        const novoEstoque = Math.max(0, produto.estoque - item.quantidade);
-        await supabase.from('produtos').update({ estoque: novoEstoque }).eq('id', item.produtoId);
-        setProdutos(prev => prev.map(p => p.id === item.produtoId ? { ...p, estoque: novoEstoque } : p));
-      })
-    );
-
     setItensCarrinho([]);
+    try {
+      setProdutos(await buscarProdutos());
+    } catch (err) {
+      console.error("Atualizar lista de produtos após pedido:", err);
+    }
   }, [itensCarrinho, produtos]);
 
   const totalItensCarrinho = useMemo(

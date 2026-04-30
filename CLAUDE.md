@@ -8,7 +8,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Commands
 
-All commands run from `front/`:
+All commands run from `apps/web/`:
 
 ```bash
 npm run dev       # Dev server → http://localhost:5173
@@ -28,7 +28,7 @@ No test or lint scripts are configured.
 
 ### State Management — LojaContext
 
-`front/src/store/LojaContext.tsx` é o coração do app. Um único contexto global gerencia tudo:
+`apps/web/src/store/LojaContext.tsx` é o coração do app. Um único contexto global gerencia tudo:
 
 - **Produtos, depoimentos, secoesHome** — carregados do Supabase no mount
 - **Carrinho** — estado local (client-side only); `totalItensCarrinho` e `subtotalCarrinho` são `useMemo`
@@ -53,7 +53,7 @@ Todas as rotas são filhas de `ClassicLayout` (Header + Footer + `<Outlet />`):
 
 ### Supabase Integration
 
-`front/src/lib/supabase.ts` exporta o client singleton. Credenciais em `front/.env.local`:
+`apps/web/src/lib/supabase.ts` exporta o client singleton. Credenciais em `apps/web/.env.local`:
 
 ```
 VITE_SUPABASE_URL
@@ -67,7 +67,7 @@ VITE_SUPABASE_ANON_KEY
 - `secoes_home` — conteúdo editorial da home em JSONB (CMS); 5 seções pré-populadas: `hero`, `manifesto`, `atmosfera`, `curadoria`, `produtos`
 - `pedidos` / `itens_pedido` — estrutura existe no schema mas não está integrada no frontend
 
-Schema completo em `sql/schema.sql`. Políticas RLS em `sql/policy_usuarios.sql`. Trigger de auth em `sql/trigger_auth.sql`.
+Schema completo em `database/supabase/schema.sql`. Políticas RLS em `database/supabase/policy_usuarios.sql`. Trigger de auth em `database/supabase/trigger_auth.sql`.
 
 ### Component Organization
 

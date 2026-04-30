@@ -4,11 +4,12 @@
   "description": "Luar Móveis - E-commerce boutique de móveis de luxo",
   "private": true,
   "scripts": {
-    "dev": "npm run dev --prefix front",
-    "start": "npm run dev --prefix front",
-    "install:front": "npm install --prefix front",
-    "build": "npm run build --prefix front",
-    "build:front": "npm run build --prefix front"
+    "dev": "npm run dev --prefix apps/web",
+    "start": "npm run dev --prefix apps/web",
+    "stack": "bash scripts/stack-up.sh",
+    "install:front": "npm install --prefix apps/web",
+    "build": "npm run build --prefix apps/web",
+    "build:front": "npm run build --prefix apps/web"
   },
   "author": "João Pedro",
   "license": "ISC"
