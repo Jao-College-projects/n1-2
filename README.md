@@ -16,6 +16,105 @@ Este projeto foi desenvolvido como parte da disciplina de **Desenvolvimento Web*
 
 **Deploy (Vercel):** defina o diretório raiz do projeto como **`apps/web`** se o repositório for este monorepo.
 
+## Comandos para rodar o sistema (ordem)
+
+Execute na **raiz do repositório**. Antes, instale Docker Desktop, JDK 17, Maven e Node e configure `apps/web/.env.local` (Supabase + URL da API); veja a seção **Como rodar o projeto (infra → front)** mais abaixo para a tabela de ferramentas e o detalhe das variáveis.
+
+| Passo | O quê | Comando |
+|-------|--------|---------|
+| 0 | Entrar na pasta do projeto | `cd /caminho/para/dev-web-n1-2026` |
+| 1 | **Config (uma vez):** Supabase no front | Crie `apps/web/.env.local` a partir de `apps/web/.env.example` com `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY`. |
+| 2 | Dependências do front (uma vez ou após mudar deps) | `npm run install:front` |
+| 3 | **Back + banco local:** Postgres (Docker) + build do WAR + Tomcat com a API | `npm run stack` — sobe **http://localhost:8082/luar-api** e Postgres em **localhost:5434**. |
+| 4 | Garantir URL da API no `.env.local` (não apaga outras variáveis) | `bash scripts/ensure-front-env.sh` |
+| 5 | **Front** (Vite; URL no terminal, em geral **http://localhost:5173**) | `npm run dev` |
+
+**Parar só o Docker** (API + Postgres): `docker compose down` na raiz.
+
+**Resumo em sequência:** `cd` → `.env.local` (Supabase) → `install:front` → `stack` → `ensure-front-env` → `dev`.
+
+## Infraestrutura Java
+
+Toda a stack da **API Java** roda na **raiz do repositório** com `docker-compose.yml`. Você **não** precisa instalar Tomcat nem Postgres na máquina se usar Docker; precisa só de **Docker Desktop**, **JDK 17+** e **Maven** (o script compila o WAR antes de subir o Tomcat).
+
+### O que sobe
+
+| Serviço (compose) | Container | Imagem | Função |
+|-------------------|-----------|--------|--------|
+| `db-java` | `luar-java-db` | `postgres:16-alpine` | Banco `luar_java`, schema inicial em `database/java/schema_java_standalone.sql` (só na **primeira** criação do volume). |
+| `tomcat` | `luar-java-tomcat` | `tomcat:10-jdk17-temurin-jammy` | Tomcat 10; monta `apps/api/target/luar-api.war` em `/luar-api`. JDBC via variáveis no compose (`JDBC_URL`, `JDBC_USER`, `JDBC_PASSWORD`). |
+
+### Pré-requisitos só para a stack Java
+
+- **Docker Desktop** ligado (`docker compose version`).
+- **JDK 17+** (`java -version`) — o Maven usa esse Java para compilar `apps/api/`.
+- **Maven 3.9+** (`mvn -v`).
+
+Node/npm **não** são obrigatórios para subir a API: use `bash scripts/stack-up.sh` direto.
+
+### Subir tudo (recomendado)
+
+Na raiz do clone:
+
+```bash
+npm run stack
+```
+
+Equivalente (sem npm):
+
+```bash
+bash scripts/stack-up.sh
+```
+
+O script, em ordem: sobe **Postgres** (`db-java`), espera ficar pronto; roda **`mvn clean package`** em `apps/api/` (gera `apps/api/target/luar-api.war`); remove e recria o container **Tomcat** para o WAR montado por volume ser recarregado; espera `GET /api/produtos` responder em **http://localhost:8082/luar-api**.
+
+### Portas, URL da API e banco (padrão deste repo)
+
+| O quê | Valor |
+|--------|--------|
+| API (Tomcat no host) | **http://localhost:8082/luar-api** (ex.: produtos: `http://localhost:8082/luar-api/api/produtos`) |
+| Postgres no host | **localhost:5434** → container escuta em `5432` |
+| Banco | `luar_java` |
+| Usuário / senha | `postgres` / `postgres` |
+
+Se **5434** ou **8082** estiverem ocupadas, edite `docker-compose.yml` (mapeamento `ports:`) e, no front, `VITE_API_BASE_URL` em `apps/web/.env.local`. Dentro da rede Docker o Tomcat usa `JDBC_URL` com host `db-java` (já definido no compose).
+
+### Só API + banco, sem o script (manual)
+
+1. Gere o WAR: `cd apps/api && mvn clean package && cd ../..`
+2. Suba os dois serviços: `docker compose up -d`
+
+O script `stack-up.sh` além disso **recria** o Tomcat após cada build (evita WAR antigo em cache) e valida a API com `curl`. Para o dia a dia, prefira `npm run stack` ou `bash scripts/stack-up.sh`.
+
+### Parar e resetar dados do Postgres
+
+```bash
+docker compose down
+```
+
+Apagar volume do banco e subir do zero (reaplica o SQL de init):
+
+```bash
+docker compose down -v
+npm run stack
+```
+
+### Conferir se a API subiu
+
+```bash
+curl -s http://localhost:8082/luar-api/api/produtos
+```
+
+Se falhar, veja os logs: `docker compose logs tomcat --tail 80` (e, se necessário, `docker compose logs db-java --tail 40`).
+
+### Documentação extra (JDBC, endpoints, pedidos no SQL)
+
+Detalhes da API, variáveis `JDBC_*` e exemplos de `curl`/`psql`: **`apps/api/README.md`**.
+
+---
+
+A seção **“Como rodar o projeto (infra → front)”** abaixo repete o fluxo completo (front + Supabase + esta stack). Para **apenas** Java + Docker, basta esta seção até o `curl` e o link do `apps/api/README.md`.
+
 ## 🛠️ Tecnologias Utilizadas
 
 - **React (Vite + TypeScript)**: Base da aplicação para alta performance e segurança de dados via tipagem forte.
@@ -48,13 +147,32 @@ A aplicação foi estruturada seguindo o princípio de **Responsabilidade Única
 
 ## 🚀 Como rodar o projeto (infra → front)
 
-Execute tudo na **raiz do repositório** (`dev-web-n1-2026/`).
+Execute tudo na **raiz do repositório** (`dev-web-n1-2026/`). A parte **Postgres + Tomcat + build do WAR** está documentada em detalhe na seção **[Infraestrutura Java](#infraestrutura-java)** acima.
 
-### Pré-requisitos
+### Instalar a infraestrutura (uma vez na máquina)
 
-- **Node.js** + npm (para o front).
-- **Docker Desktop** ligado (Postgres + Tomcat vêm do `docker compose`).
-- **Maven** no PATH (`mvn -v`), porque o script da infra roda `mvn package`. No macOS: `brew install maven`. Mais detalhes em `apps/api/README.md`.
+A infra deste repo é **PostgreSQL 16** + **Tomcat 10** com o WAR da API, orquestrados pelo `docker-compose.yml`. O script `npm run stack` (ou `bash scripts/stack-up.sh`) sobe o Postgres, roda **`mvn clean package`** em `apps/api/` para gerar `luar-api.war` e sobe o Tomcat montando esse WAR. Na **primeira** subida do Postgres, o arquivo `database/java/schema_java_standalone.sql` é aplicado automaticamente (volume em `docker-entrypoint-initdb.d`).
+
+Instale e verifique, nesta ordem:
+
+| Ferramenta | Para quê | Como instalar / conferir |
+|------------|----------|---------------------------|
+| **Docker Desktop** | `docker compose` (Postgres + Tomcat) | [Docker Desktop](https://www.docker.com/products/docker-desktop/) — abra o app e espere ficar “running”. No terminal: `docker compose version`. |
+| **JDK 17+** | Compilar a API com Maven | macOS (Homebrew): `brew install openjdk@17` e siga a mensagem do brew para exportar `PATH` (ou use um JDK 17 da Oracle/Eclipse Temurin). Confira: `java -version`. |
+| **Maven 3.9+** | `mvn clean package` dentro de `stack-up.sh` | macOS: `brew install maven`. Confira: `mvn -v` (deve listar Java 17). |
+| **Node.js + npm** | `npm run stack`, `npm run dev`, etc. | [Node.js LTS](https://nodejs.org/). Confira: `node -v` e `npm -v`. |
+
+**Só API + banco, sem usar `npm` na raiz:** com Docker e Maven no PATH, na raiz do repo execute `bash scripts/stack-up.sh` (o script não depende do Node).
+
+**Portas padrão:** Postgres no host **5434**, API em **http://localhost:8082/luar-api**. Se `5434` ou `8082` estiverem ocupadas, altere o mapeamento em `docker-compose.yml` e o `VITE_API_BASE_URL` do front.
+
+Mais detalhes da API, JDBC e endpoints: `apps/api/README.md`.
+
+### Pré-requisitos (resumo)
+
+- **Node.js** + npm (front e atalho `npm run stack`).
+- **Docker Desktop** ligado (Postgres + Tomcat via `docker compose`).
+- **Maven** no PATH — o script da infra executa `mvn package` em `apps/api/`. **JDK 17+** obrigatório para o Maven compilar.
 
 ### Variáveis de ambiente do front
 
