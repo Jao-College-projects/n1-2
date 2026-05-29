@@ -1,7 +1,21 @@
-import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
-import { supabase } from "../lib/supabase";
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import {
+  buscarSessao,
+  fazerCadastro,
+  fazerLogin,
+  fazerLogout,
+  type IUsuarioSessao,
+} from "../services/auth";
+import {
+  buscarDepoimentos,
+  criarDepoimento,
+  editarDepoimento,
+  excluirDepoimento,
+} from "../services/depoimentos";
+import { buscarSecoesHome, salvarSecaoHome } from "../services/secoes";
 import { buscarProdutos, criarProduto, editarProduto, excluirProduto } from "../services/produtos";
 import { finalizarPedido } from "../services/pedidos";
+import { requireApiBase } from "../services/apiBase";
 import {
   ICredenciaisLogin,
   IFormularioCadastro,
@@ -41,6 +55,7 @@ interface ILojaContextData {
   atualizarSecaoHome: (identificador: string, dados: ISecaoHome) => Promise<void>;
   alternarModoEdicao: () => void;
   isLoading: boolean;
+  apiErro: string | null;
   login: (dados: ICredenciaisLogin) => Promise<void>;
   cadastrar: (dados: IFormularioCadastro) => Promise<void>;
   logout: () => Promise<void>;
@@ -50,10 +65,20 @@ interface ILojaContextData {
 
 const LojaContext = createContext<ILojaContextData | undefined>(undefined);
 
+function aplicarSessao(
+  usuario: IUsuarioSessao | null,
+  setUsuarioLogado: (v: boolean) => void,
+  setTipoUsuario: (v: TipoUsuario) => void
+): void {
+  setUsuarioLogado(!!usuario);
+  setTipoUsuario(usuario?.tipoUsuario === "admin" ? "admin" : "normal");
+}
+
 export function LojaProvider({ children }: { children: React.ReactNode }): JSX.Element {
   const [produtos, setProdutos] = useState<IProduto[]>([]);
   const [depoimentos, setDepoimentos] = useState<IDepoimento[]>([]);
   const [secoesHome, setSecoesHome] = useState<ISecaoHome[]>([]);
+  const [apiErro, setApiErro] = useState<string | null>(null);
 
   const [textosSite, setTextosSite] = useState<ITextosSite>({
     tituloLoja: "Luar Moveis",
@@ -73,97 +98,54 @@ export function LojaProvider({ children }: { children: React.ReactNode }): JSX.E
   const [modoEdicao, setModoEdicao] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  // Prevents fetchUserType from being called twice during initial auth setup
-  const authInitialized = useRef(false);
-
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUsuarioLogado(!!session);
-      if (session?.user && !authInitialized.current) {
-        authInitialized.current = true;
-        fetchUserType(session.user.id);
-      }
-    });
+    try {
+      requireApiBase();
+    } catch (e) {
+      setApiErro(e instanceof Error ? e.message : "API Java não configurada");
+      setIsLoading(false);
+      return;
+    }
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUsuarioLogado(!!session);
-      if (session?.user) {
-        authInitialized.current = true;
-        fetchUserType(session.user.id);
-      } else {
-        authInitialized.current = false;
-        setTipoUsuario("normal");
-      }
-    });
-
-    // OPT-1: Parallelized queries — was sequential awaits, now runs all 3 concurrently
     async function loadData() {
       setIsLoading(true);
+      setApiErro(null);
       try {
-        const [listaProdutos, depoResult, homeResult] = await Promise.all([
-          buscarProdutos().catch((err) => {
-            console.error("API produtos (Java):", err);
-            return [] as IProduto[];
-          }),
-          supabase.from('depoimentos').select('*').order('id', { ascending: false }),
-          supabase.from('secoes_home').select('*').eq('ativo', true),
+        const [listaProdutos, listaDepoimentos, listaSecoes, sessao] = await Promise.all([
+          buscarProdutos(),
+          buscarDepoimentos(),
+          buscarSecoesHome(),
+          buscarSessao(),
         ]);
 
+        setProdutos(listaProdutos);
+        setDepoimentos(listaDepoimentos);
+        setSecoesHome(listaSecoes);
+        aplicarSessao(sessao, setUsuarioLogado, setTipoUsuario);
+
         const imageUrls: string[] = [];
-
-        if (listaProdutos.length > 0) {
-          setProdutos(listaProdutos);
-          listaProdutos.forEach((p) => { if (p.imagem) imageUrls.push(p.imagem); });
-        }
-
-        if (depoResult.data) {
-          setDepoimentos(depoResult.data);
-          depoResult.data.forEach((d: any) => { if (d.imagem) imageUrls.push(d.imagem); });
-        }
-
-        if (homeResult.data) {
-          setSecoesHome(homeResult.data.map((s: any) => ({
-            identificador: s.identificador,
-            tituloSecao: s.titulo_secao,
-            ordem: s.ordem,
-            ativo: s.ativo,
-            conteudo: s.conteudo
-          })));
-          homeResult.data.forEach((s: any) => {
-            const c = s.conteudo ?? {};
-            if (c.imagem_url) imageUrls.push(c.imagem_url);
-            if (c.imagem_back) imageUrls.push(c.imagem_back);
-            if (c.imagem_mid) imageUrls.push(c.imagem_mid);
-            if (c.imagem_front) imageUrls.push(c.imagem_front);
-            (c.ambientes ?? []).forEach((a: any) => { if (a.image) imageUrls.push(a.image); });
-            (c.pieces ?? []).forEach((p: any) => { if (p.image) imageUrls.push(p.image); });
-          });
-        }
-
-        // Preload all images into browser cache while user reads the hero.
-        // When lazy-loaded <img> elements scroll into view, they resolve instantly from cache.
-        imageUrls.forEach(url => { const img = new Image(); img.src = url; });
+        listaProdutos.forEach((p) => { if (p.imagem) imageUrls.push(p.imagem); });
+        listaDepoimentos.forEach((d) => { if (d.imagem) imageUrls.push(d.imagem); });
+        listaSecoes.forEach((s) => {
+          const c = s.conteudo ?? {};
+          if (c.imagem_url) imageUrls.push(c.imagem_url);
+          if (c.imagem_back) imageUrls.push(c.imagem_back);
+          if (c.imagem_mid) imageUrls.push(c.imagem_mid);
+          if (c.imagem_front) imageUrls.push(c.imagem_front);
+          (c.ambientes ?? []).forEach((a) => { if (a.image) imageUrls.push(a.image); });
+          (c.pieces ?? []).forEach((p) => { if (p.image) imageUrls.push(p.image); });
+        });
+        imageUrls.forEach((url) => { const img = new Image(); img.src = url; });
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : "Falha ao conectar com a API Java";
+        console.error("API Java:", err);
+        setApiErro(msg);
       } finally {
         setIsLoading(false);
       }
     }
     loadData();
-
-    return () => {
-      subscription.unsubscribe();
-    };
   }, []);
-
-  async function fetchUserType(userId: string) {
-    const { data } = await supabase.from('usuarios').select('tipo_usuario').eq('id', userId).maybeSingle();
-    if (data && data.tipo_usuario === 'admin') {
-      setTipoUsuario('admin');
-    } else {
-      setTipoUsuario('normal');
-    }
-  }
-
-  // OPT-3: All context functions wrapped with useCallback to prevent recreation on every render
 
   const selecionarProduto = useCallback((produto: IProduto): void => {
     setProdutoSelecionado(produto);
@@ -215,44 +197,37 @@ export function LojaProvider({ children }: { children: React.ReactNode }): JSX.E
   }, []);
 
   const adicionarDepoimento = useCallback(async (novo: Omit<IDepoimento, "id">) => {
-    const { data, error } = await supabase.from('depoimentos').insert([novo]).select('*').single();
-    if (!error && data) {
-      setDepoimentos(prev => [data, ...prev]);
+    const data = await criarDepoimento(novo);
+    if (data) {
+      setDepoimentos((prev) => [data, ...prev]);
     }
   }, []);
 
   const atualizarDepoimento = useCallback(async (atualizado: IDepoimento) => {
-    const { error } = await supabase.from('depoimentos').update(atualizado).eq('id', atualizado.id);
-    if (!error) {
-      setDepoimentos(prev => prev.map(d => d.id === atualizado.id ? atualizado : d));
+    const ok = await editarDepoimento(atualizado);
+    if (ok) {
+      setDepoimentos((prev) => prev.map((d) => (d.id === atualizado.id ? atualizado : d)));
     }
   }, []);
 
   const removerDepoimento = useCallback(async (id: number) => {
-    const { error } = await supabase.from('depoimentos').delete().eq('id', id);
-    if (!error) {
-      setDepoimentos(prev => prev.filter(d => d.id !== id));
+    const ok = await excluirDepoimento(id);
+    if (ok) {
+      setDepoimentos((prev) => prev.filter((d) => d.id !== id));
     }
   }, []);
 
   const atualizarTextoSite = useCallback((chave: keyof ITextosSite, valor: string): void => {
     if (tipoUsuario !== "admin") return;
-    setTextosSite(prev => ({ ...prev, [chave]: valor }));
+    setTextosSite((prev) => ({ ...prev, [chave]: valor }));
   }, [tipoUsuario]);
 
   const atualizarSecaoHome = useCallback(async (identificador: string, novaSecao: ISecaoHome) => {
-    const { error } = await supabase.from('secoes_home').upsert({
-      identificador: identificador,
-      titulo_secao: novaSecao.tituloSecao,
-      conteudo: novaSecao.conteudo,
-      ativo: novaSecao.ativo,
-      ordem: novaSecao.ordem
-    }, { onConflict: 'identificador' });
-
-    if (!error) {
-      setSecoesHome(prev => {
-        const index = prev.findIndex(s => s.identificador === identificador);
-        if (index >= 0) return prev.map((s, i) => i === index ? novaSecao : s);
+    const ok = await salvarSecaoHome(identificador, novaSecao);
+    if (ok) {
+      setSecoesHome((prev) => {
+        const index = prev.findIndex((s) => s.identificador === identificador);
+        if (index >= 0) return prev.map((s, i) => (i === index ? novaSecao : s));
         return [...prev, novaSecao];
       });
     }
@@ -260,41 +235,21 @@ export function LojaProvider({ children }: { children: React.ReactNode }): JSX.E
 
   const alternarModoEdicao = useCallback((): void => {
     if (tipoUsuario !== "admin") return;
-    setModoEdicao(prev => !prev);
+    setModoEdicao((prev) => !prev);
   }, [tipoUsuario]);
 
   const login = useCallback(async (dados: ICredenciaisLogin): Promise<void> => {
-    const { error } = await supabase.auth.signInWithPassword({
-      email: dados.email,
-      password: dados.senha,
-    });
-    if (error) throw error;
+    const usuario = await fazerLogin(dados);
+    aplicarSessao(usuario, setUsuarioLogado, setTipoUsuario);
   }, []);
 
   const cadastrar = useCallback(async (dados: IFormularioCadastro): Promise<void> => {
-    const { data, error } = await supabase.auth.signUp({
-      email: dados.email,
-      password: dados.senha,
-      options: {
-        data: {
-          nomeCompleto: dados.nomeCompleto
-        }
-      }
-    });
-    if (error) throw error;
-
-    if (data.user) {
-      const { error: insertError } = await supabase.from('usuarios').insert([
-        { id: data.user.id, nome_completo: dados.nomeCompleto, email: dados.email, tipo_usuario: 'normal' }
-      ]);
-      if (insertError) {
-        console.warn("Aviso: Nao foi possivel inserir na tabela public.usuarios (Verifique RLS).", insertError);
-      }
-    }
+    const usuario = await fazerCadastro(dados);
+    aplicarSessao(usuario, setUsuarioLogado, setTipoUsuario);
   }, []);
 
   const logout = useCallback(async (): Promise<void> => {
-    await supabase.auth.signOut();
+    await fazerLogout();
     setUsuarioLogado(false);
     setTipoUsuario("normal");
     setModoEdicao(false);
@@ -305,21 +260,16 @@ export function LojaProvider({ children }: { children: React.ReactNode }): JSX.E
   }, []);
 
   const criarPedido = useCallback(async (dados: IPedidoDados): Promise<void> => {
-    const { data: { session } } = await supabase.auth.getSession();
-
+    const sessao = await buscarSessao();
     await finalizarPedido({
-      usuarioId: session?.user?.id ?? null,
+      usuarioId: sessao?.id ?? null,
       itens: itensCarrinho,
       produtos,
       dadosEntrega: dados,
     });
 
     setItensCarrinho([]);
-    try {
-      setProdutos(await buscarProdutos());
-    } catch (err) {
-      console.error("Atualizar lista de produtos após pedido:", err);
-    }
+    setProdutos(await buscarProdutos());
   }, [itensCarrinho, produtos]);
 
   const totalItensCarrinho = useMemo(
@@ -336,7 +286,6 @@ export function LojaProvider({ children }: { children: React.ReactNode }): JSX.E
 
   const isAdmin = tipoUsuario === "admin";
 
-  // OPT-5: Memoize the entire context value to prevent cascade re-renders
   const contextValue = useMemo<ILojaContextData>(() => ({
     produtos,
     depoimentos,
@@ -364,6 +313,7 @@ export function LojaProvider({ children }: { children: React.ReactNode }): JSX.E
     atualizarSecaoHome,
     alternarModoEdicao,
     isLoading,
+    apiErro,
     login,
     cadastrar,
     logout,
@@ -375,9 +325,26 @@ export function LojaProvider({ children }: { children: React.ReactNode }): JSX.E
     totalItensCarrinho, subtotalCarrinho, selecionarProduto, fecharDetalhesProduto,
     adicionarAoCarrinho, removerDoCarrinho, adicionarProduto, atualizarProduto,
     removerProduto, adicionarDepoimento, atualizarDepoimento, removerDepoimento,
-    atualizarTextoSite, atualizarSecaoHome, alternarModoEdicao, isLoading, login, cadastrar, logout,
-    limparCarrinho, criarPedido,
+    atualizarTextoSite, atualizarSecaoHome, alternarModoEdicao, isLoading, apiErro,
+    login, cadastrar, logout, limparCarrinho, criarPedido,
   ]);
+
+  if (apiErro && !isLoading) {
+    return (
+      <div className="min-vh-100 d-flex align-items-center justify-content-center p-4" style={{ background: "#FAFAF9" }}>
+        <div className="text-center" style={{ maxWidth: 480 }}>
+          <h1 className="h4 mb-3" style={{ fontFamily: "Playfair Display, serif", color: "#1C1917" }}>
+            API indisponível
+          </h1>
+          <p className="text-muted mb-0">{apiErro}</p>
+          <p className="small text-muted mt-3 mb-0">
+            Suba o backend com <code>npm run stack</code> e configure{" "}
+            <code>VITE_API_BASE_URL</code> em <code>apps/web/.env.local</code>.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <LojaContext.Provider value={contextValue}>

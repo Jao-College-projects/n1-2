@@ -1,33 +1,27 @@
-import { supabase } from "../lib/supabase";
-import { ISecaoHome } from "../types/IProduto";
+import type { ISecaoHome } from "../types/IProduto";
+import { apiFetch, readApiErro } from "./apiFetch";
+
+function mapSecao(s: Record<string, unknown>): ISecaoHome {
+  return {
+    identificador: String(s.identificador ?? ""),
+    tituloSecao: String(s.tituloSecao ?? ""),
+    ordem: Number(s.ordem ?? 0),
+    ativo: Boolean(s.ativo ?? true),
+    conteudo: (s.conteudo as ISecaoHome["conteudo"]) ?? {},
+  };
+}
 
 export async function buscarSecoesHome(): Promise<ISecaoHome[]> {
-  const { data, error } = await supabase
-    .from("secoes_home")
-    .select("*")
-    .eq("ativo", true);
-
-  if (error || !data) return [];
-
-  return data.map((s: any) => ({
-    identificador: s.identificador,
-    tituloSecao: s.titulo_secao,
-    ordem: s.ordem,
-    ativo: s.ativo,
-    conteudo: s.conteudo,
-  }));
+  const res = await apiFetch("/api/secoes-home");
+  if (!res.ok) throw new Error(await readApiErro(res));
+  const data = (await res.json()) as Record<string, unknown>[];
+  return data.map(mapSecao);
 }
 
 export async function salvarSecaoHome(identificador: string, dados: ISecaoHome): Promise<boolean> {
-  const { error } = await supabase
-    .from("secoes_home")
-    .upsert({
-      identificador,
-      titulo_secao: dados.tituloSecao,
-      ordem: dados.ordem,
-      ativo: dados.ativo,
-      conteudo: dados.conteudo,
-    }, { onConflict: "identificador" });
-
-  return !error;
+  const res = await apiFetch(`/api/secoes-home/${encodeURIComponent(identificador)}`, {
+    method: "PUT",
+    body: JSON.stringify(dados),
+  });
+  return res.ok;
 }

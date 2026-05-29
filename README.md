@@ -1,262 +1,449 @@
-# Luar Móveis — Sistema de Gestão Boutique
+<div align="center">
 
-Este projeto foi desenvolvido como parte da disciplina de **Desenvolvimento Web** do **Prof. Fernando**. A aplicação é um e-commerce boutique focado em curadoria de móveis de alto padrão, utilizando tecnologias modernas e seguindo rigorosos padrões de arquitetura de software.
+<img src="https://capsule-render.vercel.app/api?type=waving&color=1C1917&height=160&section=header&text=Luar%20M%C3%B3veis&fontSize=48&fontColor=CA8A04&animation=fadeIn" width="100%" alt="Luar Móveis"/>
 
-## Estrutura do repositório
+<br/>
 
-| Pasta | Conteúdo |
-|--------|-----------|
-| `apps/web/` | Front-end React (Vite + TypeScript). Variáveis em `apps/web/.env.local`. |
-| `apps/api/` | Back-end Java (Maven, WAR `luar-api`). Ver `apps/api/README.md`. |
-| `database/java/` | Script SQL do Postgres usado pela API Java (`schema_java_standalone.sql`). |
-| `database/supabase/` | Scripts do schema Supabase (auth, RLS, checkout legado). |
-| `scripts/` | Automação local (`stack-up.sh`, `ensure-front-env.sh`). |
-| `design-system/` | Referência visual da marca. |
-| Raiz | `docker-compose.yml`, `package.json`, `README.md`, `CLAUDE.md`. |
+[![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)](https://react.dev/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Java](https://img.shields.io/badge/Java-17-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white)](https://openjdk.org/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-316192?style=for-the-badge&logo=postgresql&logoColor=white)](https://www.postgresql.org/)
+[![Docker](https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://www.docker.com/)
+[![Vite](https://img.shields.io/badge/Vite-646CFF?style=for-the-badge&logo=vite&logoColor=white)](https://vitejs.dev/)
+[![Bootstrap](https://img.shields.io/badge/Bootstrap-7952B3?style=for-the-badge&logo=bootstrap&logoColor=white)](https://getbootstrap.com/)
 
-**Deploy (Vercel):** defina o diretório raiz do projeto como **`apps/web`** se o repositório for este monorepo.
+<br/>
 
-## Comandos para rodar o sistema (ordem)
+**Catálogo boutique de móveis de luxo** · Atividade Final · React + Java + PostgreSQL
 
-Execute na **raiz do repositório**. Antes, instale Docker Desktop, JDK 17, Maven e Node e configure `apps/web/.env.local` (Supabase + URL da API); veja a seção **Como rodar o projeto (infra → front)** mais abaixo para a tabela de ferramentas e o detalhe das variáveis.
+[![Status](https://img.shields.io/badge/status-em%20desenvolvimento-CA8A04?style=flat-square)](.)
+[![Disciplina](https://img.shields.io/badge/disciplina-Desenvolvimento%20Web-1C1917?style=flat-square&labelColor=CA8A04)](.)
+[![Professor](https://img.shields.io/badge/prof.-Fernando-57534e?style=flat-square)](.)
+[![CRUD](https://img.shields.io/badge/CRUD-produtos-22c55e?style=flat-square)](.)
 
-| Passo | O quê | Comando |
-|-------|--------|---------|
-| 0 | Entrar na pasta do projeto | `cd /caminho/para/dev-web-n1-2026` |
-| 1 | **Config (uma vez):** Supabase no front | Crie `apps/web/.env.local` a partir de `apps/web/.env.example` com `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY`. |
-| 2 | Dependências do front (uma vez ou após mudar deps) | `npm run install:front` |
-| 3 | **Back + banco local:** Postgres (Docker) + build do WAR + Tomcat com a API | `npm run stack` — sobe **http://localhost:8082/luar-api** e Postgres em **localhost:5434**. |
-| 4 | Garantir URL da API no `.env.local` (não apaga outras variáveis) | `bash scripts/ensure-front-env.sh` |
-| 5 | **Front** (Vite; URL no terminal, em geral **http://localhost:5173**) | `npm run dev` |
+<br/>
 
-**Parar só o Docker** (API + Postgres): `docker compose down` na raiz.
+[Começar agora](#-quick-start) ·
+[Features](#-features) ·
+[API](#-api-reference) ·
+[Prints](#-preview) ·
+[Vídeo](#-vídeo)
 
-**Resumo em sequência:** `cd` → `.env.local` (Supabase) → `install:front` → `stack` → `ensure-front-env` → `dev`.
+<br/>
 
-## Infraestrutura Java
+<img src="https://readme-typing-svg.herokuapp.com?font=Fira+Code&weight=500&size=22&pause=1000&color=CA8A04&center=true&vCenter=true&width=600&lines=Full-stack+com+React+%2B+Java+%2B+PostgreSQL;CRUD+real+persistido+no+banco;Servlets+%2B+JDBC+%2B+CORS" alt="Typing SVG" />
 
-Toda a stack da **API Java** roda na **raiz do repositório** com `docker-compose.yml`. Você **não** precisa instalar Tomcat nem Postgres na máquina se usar Docker; precisa só de **Docker Desktop**, **JDK 17+** e **Maven** (o script compila o WAR antes de subir o Tomcat).
+</div>
 
-### O que sobe
+<br/>
 
-| Serviço (compose) | Container | Imagem | Função |
-|-------------------|-----------|--------|--------|
-| `db-java` | `luar-java-db` | `postgres:16-alpine` | Banco `luar_java`, schema inicial em `database/java/schema_java_standalone.sql` (só na **primeira** criação do volume). |
-| `tomcat` | `luar-java-tomcat` | `tomcat:10-jdk17-temurin-jammy` | Tomcat 10; monta `apps/api/target/luar-api.war` em `/luar-api`. JDBC via variáveis no compose (`JDBC_URL`, `JDBC_USER`, `JDBC_PASSWORD`). |
+## 📋 Table of Contents
 
-### Pré-requisitos só para a stack Java
+- [About](#-about)
+- [Features](#-features)
+- [Preview](#-preview)
+- [Quick Start](#-quick-start)
+- [Installation](#-installation)
+- [Configuration](#-configuration)
+- [Tech Stack](#-tech-stack)
+- [Architecture](#-architecture)
+- [Database](#-database)
+- [API Reference](#-api-reference)
+- [CORS](#-cors)
+- [Project Structure](#-project-structure)
+- [Academic Info](#-academic-info)
+- [Delivery Checklist](#-delivery-checklist)
+- [Video](#-vídeo)
+- [Acknowledgments](#-acknowledgments)
 
-- **Docker Desktop** ligado (`docker compose version`).
-- **JDK 17+** (`java -version`) — o Maven usa esse Java para compilar `apps/api/`.
-- **Maven 3.9+** (`mvn -v`).
+<br/>
 
-Node/npm **não** são obrigatórios para subir a API: use `bash scripts/stack-up.sh` direto.
+## 📖 About
 
-### Subir tudo (recomendado)
+> E-commerce editorial para **móveis de alto padrão**. O visitante navega pelo catálogo; o administrador gerencia o acervo com **CRUD completo** — dados no **PostgreSQL**, expostos por **API Java** e consumidos pelo **React** via `fetch`.
 
-Na raiz do clone:
+| Persona | O que faz |
+|:--------|:----------|
+| **Visitante** | Home, catálogo, filtros, detalhe, carrinho |
+| **Admin** | Criar · listar · editar · excluir produtos + dashboard |
+| **Avaliação** | Entidade `Produto` com REST + persistência real |
+
+<br/>
+
+## ✨ Features
+
+| Front-end | Back-end |
+|:----------|:---------|
+| React 18 + Vite + TypeScript | Java 17 + Servlets |
+| Bootstrap responsivo | JDBC + `ConnectionFactory` |
+| Interfaces `IProduto` | DAO + Model por domínio |
+| Dashboard com contadores | CRUD JSON em `/api/produtos` |
+| `fetch` + sessão HTTP | CORS + tratamento de erros |
+| Context API (`LojaContext`) | Transação de pedidos + estoque |
+
+**Extras:** autenticação · depoimentos · CMS da home · upload de imagens · logs `[API]` no terminal
+
+<br/>
+
+## 🖼️ Preview
+
+> Adicione suas capturas em [`docs/prints/`](docs/prints/) — nomes sugeridos na tabela.
+
+| # | Tela | Arquivo |
+|:-:|------|---------|
+| 1 | Listagem + dashboard | `01-listagem-dashboard.png` |
+| 2 | Cadastro | `02-cadastro-produto.png` |
+| 3 | Edição | `03-edicao-produto.png` |
+| 4 | Exclusão | `04-exclusao-lista.png` |
+| 5 | Postman GET | `05-postman-get.png` |
+| 6 | Postman POST | `06-postman-post.png` |
+
+<br/>
+
+<p align="center">
+  <img src="docs/prints/01-listagem-dashboard.png" width="90%" alt="Dashboard e catálogo" />
+  <br /><sub><b>Catálogo</b> — listagem com dashboard de métricas</sub>
+</p>
+
+<p align="center">
+  <img src="docs/prints/02-cadastro-produto.png" width="90%" alt="Cadastro" />
+  <br /><sub><b>CRUD</b> — formulário de cadastro</sub>
+</p>
+
+<p align="center">
+  <img src="docs/prints/05-postman-get.png" width="90%" alt="Postman" />
+  <br /><sub><b>API</b> — GET /api/produtos no Postman</sub>
+</p>
+
+<br/>
+
+## 🚀 Quick Start
 
 ```bash
-npm run stack
+git clone https://github.com/SEU-USUARIO/SEU-REPO.git
+cd n1-2
+npm start
 ```
 
-Equivalente (sem npm):
+| URL | Endereço |
+|-----|----------|
+| **Front** | http://localhost:5173 |
+| **API** | http://localhost:8082/luar-api |
+| **Admin** | `admin@luar.com` / `admin123` |
+
+<br/>
+
+## 📦 Installation
+
+### Prerequisites
+
+<img src="https://skillicons.dev/icons?i=docker,java,postgres,nodejs,git,maven" alt="skills" />
+
+| Ferramenta | Versão |
+|------------|--------|
+| Docker Desktop | latest |
+| JDK | 17+ |
+| Maven | 3.9+ |
+| Node.js | 18+ |
+
+### Steps
 
 ```bash
-bash scripts/stack-up.sh
-```
+# 1. Clone
+git clone https://github.com/SEU-USUARIO/SEU-REPO.git && cd n1-2
 
-O script, em ordem: sobe **Postgres** (`db-java`), espera ficar pronto; roda **`mvn clean package`** em `apps/api/` (gera `apps/api/target/luar-api.war`); remove e recria o container **Tomcat** para o WAR montado por volume ser recarregado; espera `GET /api/produtos` responder em **http://localhost:8082/luar-api**.
-
-### Portas, URL da API e banco (padrão deste repo)
-
-| O quê | Valor |
-|--------|--------|
-| API (Tomcat no host) | **http://localhost:8082/luar-api** (ex.: produtos: `http://localhost:8082/luar-api/api/produtos`) |
-| Postgres no host | **localhost:5434** → container escuta em `5432` |
-| Banco | `luar_java` |
-| Usuário / senha | `postgres` / `postgres` |
-
-Se **5434** ou **8082** estiverem ocupadas, edite `docker-compose.yml` (mapeamento `ports:`) e, no front, `VITE_API_BASE_URL` em `apps/web/.env.local`. Dentro da rede Docker o Tomcat usa `JDBC_URL` com host `db-java` (já definido no compose).
-
-### Só API + banco, sem o script (manual)
-
-1. Gere o WAR: `cd apps/api && mvn clean package && cd ../..`
-2. Suba os dois serviços: `docker compose up -d`
-
-O script `stack-up.sh` além disso **recria** o Tomcat após cada build (evita WAR antigo em cache) e valida a API com `curl`. Para o dia a dia, prefira `npm run stack` ou `bash scripts/stack-up.sh`.
-
-### Parar e resetar dados do Postgres
-
-```bash
-docker compose down
-```
-
-Apagar volume do banco e subir do zero (reaplica o SQL de init):
-
-```bash
-docker compose down -v
-npm run stack
-```
-
-### Conferir se a API subiu
-
-```bash
-curl -s http://localhost:8082/luar-api/api/produtos
-```
-
-Se falhar, veja os logs: `docker compose logs tomcat --tail 80` (e, se necessário, `docker compose logs db-java --tail 40`).
-
-### Documentação extra (JDBC, endpoints, pedidos no SQL)
-
-Detalhes da API, variáveis `JDBC_*` e exemplos de `curl`/`psql`: **`apps/api/README.md`**.
-
----
-
-A seção **“Como rodar o projeto (infra → front)”** abaixo repete o fluxo completo (front + Supabase + esta stack). Para **apenas** Java + Docker, basta esta seção até o `curl` e o link do `apps/api/README.md`.
-
-## 🛠️ Tecnologias Utilizadas
-
-- **React (Vite + TypeScript)**: Base da aplicação para alta performance e segurança de dados via tipagem forte.
-- **Bootstrap (via CDN)**: Utilizado para a estrutura base e sistema de grades (Grid System).
-- **Tailwind CSS**: Utilizado para estilização personalizada, cores e micro-interações.
-- **Supabase**: Backend-as-a-Service para autenticação, banco de dados (PostgreSQL) e armazenamento de imagens.
-- **Framer Motion**: Para animações fluidas e experiência de usuário premium.
-
-## 🏗️ Arquitetura e Decisões Técnicas
-
-A aplicação foi estruturada seguindo o princípio de **Responsabilidade Única (SRP)** e **Componentização**:
-
-1. Separação de Camadas:
-   - `src/components`: Dividido em pastas lógicas (`layout`, `produtos`, `ui`). Isso garante que componentes puramente visuais (UI) fiquem separados da lógica de negócio (Produtos).
-   - `src/pages`: Componentes de página que orquestram os componentes menores e lidam com a lógica de roteamento.
-   - `src/store`: Uso de **Context API** (`LojaContext`) para centralizar o estado global (Produtos, Carrinho, Usuário). Isso permite que o **Dashboard** e a **Listagem** estejam sempre sincronizados.
-   - `src/types`: Interfaces TypeScript rigorosas que definem o "contrato" de dados do sistema, prevenindo erros de execução.
-
-2. Layout Assimétrico (Bootstrap):
-   - A página de Catálogo utiliza o **Sistema de Grades do Bootstrap** (`row`, `col-lg-3`, `col-lg-9`).
-   - No Desktop, a organização é assimétrica: barra lateral de filtros (3 colunas) e conteúdo principal (9 colunas).
-   - No Celular, as colunas se empilham automaticamente para 12 unidades, garantindo total responsividade.
-
-3. Dashboard Dinâmico e Status Visual:
-   - O Dashboard no topo do catálogo reage instantaneamente a qualquer alteração na lista (filtros, exclusão ou atualização de estoque).
-   - Peças com estoque zerado recebem o status visual **"Esgotado"** com overlay e desabilitação de compra, conforme os requisitos de lógica de estado.
-
-4. Semântica HTML5:
-   - Uso rigoroso das tags `header`, `main`, `section`, `aside` e `address` para garantir acessibilidade e SEO.
-
-## 🚀 Como rodar o projeto (infra → front)
-
-Execute tudo na **raiz do repositório** (`dev-web-n1-2026/`). A parte **Postgres + Tomcat + build do WAR** está documentada em detalhe na seção **[Infraestrutura Java](#infraestrutura-java)** acima.
-
-### Instalar a infraestrutura (uma vez na máquina)
-
-A infra deste repo é **PostgreSQL 16** + **Tomcat 10** com o WAR da API, orquestrados pelo `docker-compose.yml`. O script `npm run stack` (ou `bash scripts/stack-up.sh`) sobe o Postgres, roda **`mvn clean package`** em `apps/api/` para gerar `luar-api.war` e sobe o Tomcat montando esse WAR. Na **primeira** subida do Postgres, o arquivo `database/java/schema_java_standalone.sql` é aplicado automaticamente (volume em `docker-entrypoint-initdb.d`).
-
-Instale e verifique, nesta ordem:
-
-| Ferramenta | Para quê | Como instalar / conferir |
-|------------|----------|---------------------------|
-| **Docker Desktop** | `docker compose` (Postgres + Tomcat) | [Docker Desktop](https://www.docker.com/products/docker-desktop/) — abra o app e espere ficar “running”. No terminal: `docker compose version`. |
-| **JDK 17+** | Compilar a API com Maven | macOS (Homebrew): `brew install openjdk@17` e siga a mensagem do brew para exportar `PATH` (ou use um JDK 17 da Oracle/Eclipse Temurin). Confira: `java -version`. |
-| **Maven 3.9+** | `mvn clean package` dentro de `stack-up.sh` | macOS: `brew install maven`. Confira: `mvn -v` (deve listar Java 17). |
-| **Node.js + npm** | `npm run stack`, `npm run dev`, etc. | [Node.js LTS](https://nodejs.org/). Confira: `node -v` e `npm -v`. |
-
-**Só API + banco, sem usar `npm` na raiz:** com Docker e Maven no PATH, na raiz do repo execute `bash scripts/stack-up.sh` (o script não depende do Node).
-
-**Portas padrão:** Postgres no host **5434**, API em **http://localhost:8082/luar-api**. Se `5434` ou `8082` estiverem ocupadas, altere o mapeamento em `docker-compose.yml` e o `VITE_API_BASE_URL` do front.
-
-Mais detalhes da API, JDBC e endpoints: `apps/api/README.md`.
-
-### Pré-requisitos (resumo)
-
-- **Node.js** + npm (front e atalho `npm run stack`).
-- **Docker Desktop** ligado (Postgres + Tomcat via `docker compose`).
-- **Maven** no PATH — o script da infra executa `mvn package` em `apps/api/`. **JDK 17+** obrigatório para o Maven compilar.
-
-### Variáveis de ambiente do front
-
-Crie o arquivo **`apps/web/.env.local`**. Use `apps/web/.env.example` como base e preencha pelo menos:
-
-| Variável | Uso |
-|----------|-----|
-| `VITE_SUPABASE_URL` | Auth, depoimentos, seções, upload de imagens (Supabase). |
-| `VITE_SUPABASE_ANON_KEY` | Chave anônima do projeto Supabase. |
-| `VITE_API_BASE_URL` | URL da API Java (ex.: `http://localhost:8082/luar-api`). O script abaixo adiciona essa linha se ainda não existir. |
-
-Se você mudar as portas no `docker-compose.yml`, ajuste `VITE_API_BASE_URL` para a mesma porta do Tomcat no host.
-
-### Passo a passo (ordem)
-
-```bash
-# 1) Entrar na raiz do clone
-cd /caminho/para/dev-web-n1-2026
-
-# 2) Dependências do front (uma vez, ou após mudar package.json)
+# 2. Front dependencies (first time)
 npm run install:front
 
-# 3) Subir Postgres + build do WAR + Tomcat com a API
-#    (Postgres no host :5434, API em http://localhost:8082/luar-api — valores padrão deste repo)
-npm run stack
-
-# 4) Garantir VITE_API_BASE_URL no .env.local (não apaga outras variáveis)
+# 3. Environment
 bash scripts/ensure-front-env.sh
 
-# 5) Rodar o front (Vite). A URL exata aparece no terminal (geralmente http://localhost:5173)
+# 4. API + database (Docker)
+npm run stack
+
+# 5. Front dev server
 npm run dev
 ```
 
-**Resumo:** `install:front` → `stack` (infra + Java) → `ensure-front-env` → `dev`.
+<details>
+<summary><b>Alternative: one-liner stack only</b></summary>
 
-### Parar a infra (Docker)
+<br />
 
 ```bash
-docker compose down
+npm run stack    # Postgres + Tomcat + mvn package
+npm run dev      # Vite
+npm run logs:api # watch [API] request logs
 ```
 
-Para apagar também os dados do Postgres do compose: `docker compose down -v`.
+```bash
+docker compose down              # stop
+docker compose down -v && npm run stack   # reset DB
+```
 
-### Outros comandos úteis
+</details>
 
-| Comando | O que faz |
-|---------|-----------|
-| `npm run build` | Build de produção do front (`apps/web`). |
-| `bash run.sh` | Instala deps do front se faltar `node_modules` e sobe o Vite (não sobe Docker; use após `npm run stack` se quiser só o front). |
+<br/>
 
-## Checar produtos e pedidos (API + PostgreSQL)
+## ⚙️ Configuration
 
-Ajuste a porta **8082** e o host da API se o seu `docker-compose` ou Tomcat usarem outros valores.
+Crie `apps/web/.env.local` (ou use `scripts/ensure-front-env.sh`):
 
-### Produtos (há `GET` na API)
+```env
+VITE_API_BASE_URL=http://localhost:8082/luar-api
+```
 
-Lista o catálogo retornado pelo back-end Java (dados vindos do Postgres):
+| Variável (Tomcat / Docker) | Padrão |
+|----------------------------|--------|
+| `JDBC_URL` | `jdbc:postgresql://db-java:5432/luar_java` |
+| `JDBC_USER` / `JDBC_PASSWORD` | `postgres` / `postgres` |
+| Postgres (host) | `localhost:5434` |
+
+<br/>
+
+## 🛠 Tech Stack
+
+<div align="center">
+
+<img src="https://skillicons.dev/icons?i=react,typescript,vite,java,postgres,docker,tomcat,maven" />
+
+</div>
+
+<br/>
+
+| Layer | Stack | Path |
+|:-----:|:------|:-----|
+| **UI** | React · TypeScript · Bootstrap · Framer Motion | `apps/web/` |
+| **API** | Jakarta Servlets · Gson · JDBC | `apps/api/` |
+| **DB** | PostgreSQL 16 | `database/java/` |
+| **Ops** | Docker Compose · Tomcat 10 | `docker-compose.yml` |
+
+> Academic requirement: **Option B** — Servlets + JDBC (no Hibernate).
+
+<br/>
+
+## 🏗 Architecture
+
+```mermaid
+flowchart TB
+  subgraph FE["Front-end :5173"]
+    A["React + Vite"]
+    B["LojaContext"]
+    C["services/*.ts"]
+  end
+  subgraph BE["Back-end :8082"]
+    D["Servlets"]
+    E["DAO"]
+    F["ConnectionFactory"]
+  end
+  subgraph DB["Data"]
+    G[("PostgreSQL")]
+  end
+  A --> B --> C
+  C -->|"fetch + CORS"| D
+  D --> E --> F --> G
+```
+
+<details>
+<summary><b>Layer responsibilities</b></summary>
+
+<br />
+
+| Path | Role |
+|------|------|
+| `apps/web/src/pages/` | Route pages |
+| `apps/web/src/components/` | Reusable UI |
+| `apps/web/src/store/LojaContext.tsx` | Global state |
+| `apps/web/src/services/` | HTTP clients |
+| `apps/api/.../model/` | Entities (`Produto`, …) |
+| `apps/api/.../dao/` | SQL access |
+| `apps/api/.../web/` | REST servlets + `CorsFilter` |
+| `apps/api/.../infra/` | JDBC factory |
+
+</details>
+
+<br/>
+
+## 🗄 Database
+
+**Script:** [`database/java/schema_java_standalone.sql`](database/java/schema_java_standalone.sql)
+
+### Table `produtos` (graded entity)
+
+| Column | Type | Description |
+|:-------|:-----|:------------|
+| `id` | `SERIAL` | Primary key |
+| `nome` | `VARCHAR(255)` | Product name |
+| `categoria` | `VARCHAR(150)` | Room / category |
+| `preco` | `NUMERIC(10,2)` | Price |
+| `estoque` | `INTEGER` | Stock |
+| `descricao_curta` / `descricao_longa` | text | Descriptions |
+| `imagem` | `VARCHAR(500)` | Image URL |
+| `destaque_carrossel` | `BOOLEAN` | Home carousel |
+
+```bash
+# Auto (Docker init)
+npm run stack
+
+# Manual
+psql -h localhost -p 5434 -U postgres -d luar_java \
+  -f database/java/schema_java_standalone.sql
+```
+
+<br/>
+
+## 🔌 API Reference
+
+**Base URL** → `http://localhost:8082/luar-api`
+
+### Products (CRUD)
+
+| | Method | Endpoint | Auth |
+|:-:|--------|----------|:----:|
+| 📄 | `GET` | `/api/produtos` | public |
+| 📄 | `GET` | `/api/produtos/{id}` | public |
+| ➕ | `POST` | `/api/produtos` | admin |
+| ✏️ | `PUT` | `/api/produtos/{id}` | admin |
+| 🗑️ | `DELETE` | `/api/produtos/{id}` | admin |
+
+<details>
+<summary><b>Request body (POST / PUT)</b></summary>
+
+```json
+{
+  "nome": "Sofá Aurora",
+  "categoria": "Sala",
+  "descricaoCurta": "Linhas baixas, abraço amplo.",
+  "descricaoLonga": "Peça de curadoria para estar prolongado.",
+  "preco": 12990.0,
+  "estoque": 5,
+  "imagem": "",
+  "destaqueCarrossel": true
+}
+```
+
+</details>
+
+### Postman flow
+
+1. `POST /api/auth/login` → `{"email":"admin@luar.com","senha":"admin123"}`
+2. Save cookie **`JSESSIONID`**
+3. Call `POST` / `PUT` / `DELETE` on `/api/produtos`
+
+### cURL
 
 ```bash
 curl -s http://localhost:8082/luar-api/api/produtos
+
+curl -c cookies.txt -X POST http://localhost:8082/luar-api/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"admin@luar.com","senha":"admin123"}'
+
+curl -b cookies.txt -X POST http://localhost:8082/luar-api/api/produtos \
+  -H "Content-Type: application/json" \
+  -d '{"nome":"Mesa API","categoria":"Jantar","descricaoCurta":"x","descricaoLonga":"x","preco":1999,"estoque":2,"imagem":"","destaqueCarrossel":false}'
 ```
 
-### Pedidos (não há `GET` na API)
+📚 Full API docs → [`apps/api/README.md`](apps/api/README.md)
 
-O endpoint `POST /api/pedidos` serve só para **finalizar** um pedido (gravar pedido, itens e baixar estoque). **Não existe** `GET /api/pedidos` para listar pedidos via HTTP; por isso a checagem é feita **direto no banco** com `psql` no container do Postgres (nome padrão do compose: `luar-java-db`):
+<br/>
 
-```bash
-docker exec -it luar-java-db psql -U postgres -d luar_java -c "SELECT id, usuario_id, status, total, created_at FROM pedidos ORDER BY id DESC;"
+## 🌐 CORS
+
+| Origin | Port |
+|--------|------|
+| Vite | `http://localhost:5173` |
+| Tomcat | `http://localhost:8082` |
+
+Cross-origin → browser blocks without headers. Implemented in [`CorsFilter.java`](apps/api/src/main/java/com/luarmoveis/web/CorsFilter.java):
+
+- `Access-Control-Allow-Origin` (echoes React origin)
+- `Access-Control-Allow-Credentials` (session cookie)
+- Methods: `GET, POST, PUT, DELETE, OPTIONS`
+
+<br/>
+
+## 📁 Project Structure
+
+```
+n1-2/
+├── 📂 apps/
+│   ├── 🌐 web/              # React + Vite + TypeScript
+│   └── ☕ api/              # Java WAR (luar-api)
+├── 📂 database/java/        # PostgreSQL schema
+├── 📂 docs/
+│   ├── ROTEIRO-VIDEO.md
+│   └── prints/
+├── 📂 scripts/              # stack-up · ensure-env · logs
+├── 🐳 docker-compose.yml
+├── 🚀 run.sh
+└── 📄 README.md
 ```
 
-Itens associados aos pedidos:
+<br/>
 
-```bash
-docker exec -it luar-java-db psql -U postgres -d luar_java -c "SELECT id, pedido_id, produto_id, quantidade, preco_unitario FROM itens_pedido ORDER BY id DESC LIMIT 20;"
-```
+## 🎓 Academic Info
 
-Se o Postgres estiver só no host (sem Docker), use `psql -h localhost -p 5434 -U postgres -d luar_java` com os mesmos `SELECT`.
+| | |
+|---|---|
+| **Students** | João Pedro *(add teammates)* |
+| **Course** | Desenvolvimento Web |
+| **Professor** | Fernando |
+| **Date** | Maio de 2026 |
+| **Theme** | Product catalog — luxury furniture |
 
-## 👤 Identificação
+Site footer also shows: developer name · course · professor · date.
 
-- **Aluno**: João Pedro
-- **Disciplina**: Desenvolvimento Web
-- **Professor**: Fernando
-- **Data**: Abril de 2026
+<br/>
+
+## ✅ Delivery Checklist
+
+- [x] React + TypeScript + Bootstrap + responsive layout
+- [x] List · create · edit · delete + UI refresh
+- [x] Dashboard / counters
+- [x] Data from Java API (not hardcoded arrays)
+- [x] Servlets + JDBC + `ConnectionFactory`
+- [x] PostgreSQL + SQL script
+- [x] CORS configured
+- [x] README + `.gitignore` + commits
+- [ ] Video link (3–5 min) — [add below](#-vídeo)
+- [ ] Screenshots in `docs/prints/`
+
+<br/>
+
+## 🎥 Vídeo
+
+| | |
+|---|---|
+| **Link** | **[ INSERT YOUTUBE / DRIVE URL ]** |
+| **Script** | [`docs/ROTEIRO-VIDEO.md`](docs/ROTEIRO-VIDEO.md) |
+
+Topics: theme · CRUD demo · React↔Java · CORS · Postman
+
+<br/>
+
+## 🙏 Acknowledgments
+
+- Activity 06 extended to full-stack integration
+- Design reference: `design-system/luar-moveis/`
+- [Awesome README](https://github.com/matiassingers/awesome-readme) patterns
+
+<br/>
 
 ---
-*Scripts SQL: `database/java/` (Postgres da API Java) e `database/supabase/` (Supabase).*
+
+<div align="center">
+
+**Luar Móveis**
+
+*Desenvolvimento Web · Prof. Fernando · 2026*
+
+<br/>
+
+<img src="https://capsule-render.vercel.app/api?type=waving&color=1C1917&height=80&section=footer&text=Made%20with%20React%20%2B%20Java&fontSize=16&fontColor=CA8A04&animation=fadeIn" width="100%" alt="footer"/>
+
+<br/>
+
+⭐ If this repo helped your studies, consider leaving a star
+
+</div>

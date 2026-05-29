@@ -1,9 +1,9 @@
 package com.luarmoveis.web;
 
 import com.luarmoveis.auth.AuthHelper;
-import com.luarmoveis.dao.ProdutoDAO;
+import com.luarmoveis.dao.DepoimentoDAO;
 import com.luarmoveis.infra.ConnectionFactory;
-import com.luarmoveis.model.Produto;
+import com.luarmoveis.model.Depoimento;
 
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -13,42 +13,19 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.List;
-import java.util.Optional;
 
-@WebServlet(name = "ProdutoServlet", urlPatterns = {"/api/produtos", "/api/produtos/*"})
-public class ProdutoServlet extends HttpServlet {
+@WebServlet(name = "DepoimentoServlet", urlPatterns = {"/api/depoimentos", "/api/depoimentos/*"})
+public class DepoimentoServlet extends HttpServlet {
 
-    private final ProdutoDAO produtoDAO = new ProdutoDAO();
+    private final DepoimentoDAO depoimentoDAO = new DepoimentoDAO();
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-        String pathInfo = req.getPathInfo();
-        if (pathInfo == null || pathInfo.isEmpty() || "/".equals(pathInfo)) {
-            try (var conn = ConnectionFactory.getConnection()) {
-                List<Produto> list = produtoDAO.findAll(conn);
-                JsonResponses.writeJson(resp, HttpServletResponse.SC_OK, list);
-            } catch (SQLException e) {
-                getServletContext().log("GET /api/produtos", e);
-                JsonResponses.writeErro(resp, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Erro ao acessar o banco");
-            }
-            return;
-        }
-        final long id;
-        try {
-            id = parseId(pathInfo);
-        } catch (IllegalArgumentException e) {
-            JsonResponses.writeErro(resp, HttpServletResponse.SC_BAD_REQUEST, "Id inválido");
-            return;
-        }
         try (var conn = ConnectionFactory.getConnection()) {
-            Optional<Produto> p = produtoDAO.findById(conn, id);
-            if (p.isEmpty()) {
-                JsonResponses.writeErro(resp, HttpServletResponse.SC_NOT_FOUND, "Produto não encontrado");
-                return;
-            }
-            JsonResponses.writeJson(resp, HttpServletResponse.SC_OK, p.get());
+            List<Depoimento> list = depoimentoDAO.findAll(conn);
+            JsonResponses.writeJson(resp, HttpServletResponse.SC_OK, list);
         } catch (SQLException e) {
-            JsonResponses.writeErro(resp, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Erro ao acessar o banco");
+            JsonResponses.writeErro(resp, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Erro ao listar depoimentos");
         }
     }
 
@@ -58,14 +35,14 @@ public class ProdutoServlet extends HttpServlet {
             return;
         }
         try {
-            Produto body = JsonResponses.readJson(req, Produto.class);
+            Depoimento body = JsonResponses.readJson(req, Depoimento.class);
             try (var conn = ConnectionFactory.getConnection()) {
-                long id = produtoDAO.insert(conn, body);
+                long id = depoimentoDAO.insert(conn, body);
                 body.setId(id);
                 JsonResponses.writeJson(resp, HttpServletResponse.SC_CREATED, body);
             }
         } catch (SQLException e) {
-            JsonResponses.writeErro(resp, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Erro ao salvar produto");
+            JsonResponses.writeErro(resp, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Erro ao criar depoimento");
         }
     }
 
@@ -79,18 +56,18 @@ public class ProdutoServlet extends HttpServlet {
             JsonResponses.writeErro(resp, HttpServletResponse.SC_BAD_REQUEST, "Informe o id na URL");
             return;
         }
-        final long idUrl;
+        final long id;
         try {
-            idUrl = parseId(pathInfo);
+            id = parseId(pathInfo);
         } catch (IllegalArgumentException e) {
             JsonResponses.writeErro(resp, HttpServletResponse.SC_BAD_REQUEST, "Id inválido");
             return;
         }
         try {
-            Produto body = JsonResponses.readJson(req, Produto.class);
-            body.setId(idUrl);
+            Depoimento body = JsonResponses.readJson(req, Depoimento.class);
+            body.setId(id);
             try (var conn = ConnectionFactory.getConnection()) {
-                produtoDAO.update(conn, body);
+                depoimentoDAO.update(conn, body);
                 JsonResponses.writeJson(resp, HttpServletResponse.SC_OK, body);
             }
         } catch (SQLException e) {
@@ -116,7 +93,7 @@ public class ProdutoServlet extends HttpServlet {
             return;
         }
         try (var conn = ConnectionFactory.getConnection()) {
-            produtoDAO.delete(conn, id);
+            depoimentoDAO.delete(conn, id);
             resp.setStatus(HttpServletResponse.SC_NO_CONTENT);
         } catch (SQLException e) {
             JsonResponses.writeErro(resp, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage());

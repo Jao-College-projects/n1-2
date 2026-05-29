@@ -91,7 +91,7 @@ export function EditableImageField({
       });
     } catch (erro) {
       console.error(erro);
-      alert("Falha no upload da imagem. Certifique-se de que o bucket 'loja' existe no Supabase.");
+      alert("Falha no upload da imagem. Verifique se a API Java está rodando e se você está logado como admin.");
     } finally {
       setCarregando(false);
     }

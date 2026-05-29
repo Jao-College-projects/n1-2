@@ -1,14 +1,5 @@
 import type { IProduto } from "../types/IProduto";
-import { requireApiBase } from "./apiBase";
-
-async function readErro(res: Response): Promise<string> {
-  try {
-    const j = (await res.json()) as { erro?: string };
-    return j.erro ?? res.statusText;
-  } catch {
-    return res.statusText;
-  }
-}
+import { apiFetch, readApiErro } from "./apiFetch";
 
 function mapProduto(p: Record<string, unknown>): IProduto {
   return {
@@ -25,18 +16,15 @@ function mapProduto(p: Record<string, unknown>): IProduto {
 }
 
 export async function buscarProdutos(): Promise<IProduto[]> {
-  const base = requireApiBase();
-  const res = await fetch(`${base}/api/produtos`);
-  if (!res.ok) throw new Error(await readErro(res));
+  const res = await apiFetch("/api/produtos");
+  if (!res.ok) throw new Error(await readApiErro(res));
   const data = (await res.json()) as Record<string, unknown>[];
   return data.map(mapProduto);
 }
 
 export async function criarProduto(novoProduto: Omit<IProduto, "id">): Promise<IProduto | null> {
-  const base = requireApiBase();
-  const res = await fetch(`${base}/api/produtos`, {
+  const res = await apiFetch("/api/produtos", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(novoProduto),
   });
   if (!res.ok) return null;
@@ -45,17 +33,14 @@ export async function criarProduto(novoProduto: Omit<IProduto, "id">): Promise<I
 }
 
 export async function editarProduto(produto: IProduto): Promise<boolean> {
-  const base = requireApiBase();
-  const res = await fetch(`${base}/api/produtos/${produto.id}`, {
+  const res = await apiFetch(`/api/produtos/${produto.id}`, {
     method: "PUT",
-    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(produto),
   });
   return res.ok;
 }
 
 export async function excluirProduto(produtoId: number): Promise<boolean> {
-  const base = requireApiBase();
-  const res = await fetch(`${base}/api/produtos/${produtoId}`, { method: "DELETE" });
+  const res = await apiFetch(`/api/produtos/${produtoId}`, { method: "DELETE" });
   return res.status === 204 || res.ok;
 }

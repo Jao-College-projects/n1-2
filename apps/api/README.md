@@ -79,10 +79,24 @@ O WAR gerado fica em `target/luar-api.war`. Copie para `tomcat/webapps/` (o cont
 |--------|----------------------|------------------------------------|
 | GET    | `/api/produtos`      | Lista produtos                     |
 | GET    | `/api/produtos/{id}` | Um produto                         |
-| POST   | `/api/produtos`      | Cria produto (JSON camelCase)      |
-| PUT    | `/api/produtos/{id}` | Atualiza produto                   |
-| DELETE | `/api/produtos/{id}` | Exclui produto                     |
-| POST   | `/api/pedidos`       | Finaliza pedido (transação: pedido + itens + baixa de estoque) |
+| POST   | `/api/produtos`      | Cria produto (admin, sessão)       |
+| PUT    | `/api/produtos/{id}` | Atualiza produto (admin)           |
+| DELETE | `/api/produtos/{id}` | Exclui produto (admin)             |
+| POST   | `/api/pedidos`       | Finaliza pedido (transação)        |
+| POST   | `/api/auth/login`    | Login (cookie de sessão)           |
+| POST   | `/api/auth/register` | Cadastro                           |
+| POST   | `/api/auth/logout`   | Logout                             |
+| GET    | `/api/auth/me`       | Usuário da sessão (204 se anônimo) |
+| GET    | `/api/depoimentos`   | Lista depoimentos                  |
+| POST   | `/api/depoimentos`   | Cria depoimento (admin)            |
+| PUT    | `/api/depoimentos/{id}` | Atualiza depoimento (admin)     |
+| DELETE | `/api/depoimentos/{id}` | Exclui depoimento (admin)       |
+| GET    | `/api/secoes-home`   | Seções ativas da home              |
+| PUT    | `/api/secoes-home/{id}` | Salva seção CMS (admin)         |
+| POST   | `/api/uploads`       | Upload de imagem (admin, multipart `file`) |
+| GET    | `/api/uploads/{nome}` | Serve arquivo enviado             |
+
+**Admin padrão (seed local):** `admin@luar.com` / `admin123`
 
 Não há **`GET /api/pedidos`**: pedidos só são criados via `POST`. Para **listar** pedidos gravados, use o PostgreSQL (exemplo com o container `luar-java-db` do `docker compose`):
 

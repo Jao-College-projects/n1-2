@@ -1,33 +1,50 @@
-import { supabase } from "../lib/supabase";
-import { ICredenciaisLogin, IFormularioCadastro, TipoUsuario } from "../types/IProduto";
+import type { ICredenciaisLogin, IFormularioCadastro, TipoUsuario } from "../types/IProduto";
+import { apiFetch, readApiErro } from "./apiFetch";
 
-export async function fazerLogin(dados: ICredenciaisLogin): Promise<void> {
-  const { error } = await supabase.auth.signInWithPassword({
-    email: dados.email,
-    password: dados.senha,
-  });
-  if (error) throw new Error(error.message);
+export interface IUsuarioSessao {
+  id: string;
+  nomeCompleto: string;
+  email: string;
+  tipoUsuario: TipoUsuario;
 }
 
-export async function fazerCadastro(dados: IFormularioCadastro): Promise<void> {
-  const { error } = await supabase.auth.signUp({
-    email: dados.email,
-    password: dados.senha,
-    options: { data: { nome_completo: dados.nomeCompleto } },
+function mapUsuario(raw: Record<string, unknown>): IUsuarioSessao {
+  return {
+    id: String(raw.id ?? ""),
+    nomeCompleto: String(raw.nomeCompleto ?? ""),
+    email: String(raw.email ?? ""),
+    tipoUsuario: raw.tipoUsuario === "admin" ? "admin" : "normal",
+  };
+}
+
+export async function buscarSessao(): Promise<IUsuarioSessao | null> {
+  const res = await apiFetch("/api/auth/me");
+  if (res.status === 204) return null;
+  if (!res.ok) return null;
+  const data = (await res.json()) as Record<string, unknown>;
+  return mapUsuario(data);
+}
+
+export async function fazerLogin(dados: ICredenciaisLogin): Promise<IUsuarioSessao> {
+  const res = await apiFetch("/api/auth/login", {
+    method: "POST",
+    body: JSON.stringify(dados),
   });
-  if (error) throw new Error(error.message);
+  if (!res.ok) throw new Error(await readApiErro(res));
+  const data = (await res.json()) as Record<string, unknown>;
+  return mapUsuario(data);
+}
+
+export async function fazerCadastro(dados: IFormularioCadastro): Promise<IUsuarioSessao> {
+  const res = await apiFetch("/api/auth/register", {
+    method: "POST",
+    body: JSON.stringify(dados),
+  });
+  if (!res.ok) throw new Error(await readApiErro(res));
+  const data = (await res.json()) as Record<string, unknown>;
+  return mapUsuario(data);
 }
 
 export async function fazerLogout(): Promise<void> {
-  await supabase.auth.signOut();
-}
-
-export async function buscarTipoUsuario(userId: string): Promise<TipoUsuario> {
-  const { data } = await supabase
-    .from("usuarios")
-    .select("tipo_usuario")
-    .eq("id", userId)
-    .maybeSingle();
-
-  return data?.tipo_usuario === "admin" ? "admin" : "normal";
+  await apiFetch("/api/auth/logout", { method: "POST" });
 }

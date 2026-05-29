@@ -1,5 +1,5 @@
 import type { IItemCarrinho, IPedidoDados, IProduto } from "../types/IProduto";
-import { requireApiBase } from "./apiBase";
+import { apiFetch, readApiErro } from "./apiFetch";
 
 export interface FinalizarPedidoInput {
   usuarioId: string | null | undefined;
@@ -8,20 +8,10 @@ export interface FinalizarPedidoInput {
   dadosEntrega: IPedidoDados;
 }
 
-async function readErro(res: Response): Promise<string> {
-  try {
-    const j = (await res.json()) as { erro?: string };
-    return j.erro ?? res.statusText;
-  } catch {
-    return res.statusText;
-  }
-}
-
 /**
  * Transação no servidor: grava pedido, itens e baixa estoque.
  */
 export async function finalizarPedido(input: FinalizarPedidoInput): Promise<{ id: number; total: number }> {
-  const base = requireApiBase();
   const body = {
     usuarioId: input.usuarioId ?? null,
     itens: input.itens.map((item) => {
@@ -34,13 +24,12 @@ export async function finalizarPedido(input: FinalizarPedidoInput): Promise<{ id
     }),
     dadosEntrega: input.dadosEntrega,
   };
-  const res = await fetch(`${base}/api/pedidos`, {
+  const res = await apiFetch("/api/pedidos", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
   });
   if (!res.ok) {
-    throw new Error(await readErro(res));
+    throw new Error(await readApiErro(res));
   }
   const data = (await res.json()) as { id: number; total: number };
   return { id: data.id, total: Number(data.total) };

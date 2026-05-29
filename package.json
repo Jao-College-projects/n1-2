@@ -5,8 +5,10 @@
   "private": true,
   "scripts": {
     "dev": "npm run dev --prefix apps/web",
-    "start": "npm run dev --prefix apps/web",
+    "start": "bash run.sh",
+    "local": "bash run.sh",
     "stack": "bash scripts/stack-up.sh",
+    "logs:api": "bash scripts/logs-api.sh",
     "install:front": "npm install --prefix apps/web",
     "build": "npm run build --prefix apps/web",
     "build:front": "npm run build --prefix apps/web"

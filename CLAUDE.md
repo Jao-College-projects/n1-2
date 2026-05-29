@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**Luar Móveis** — e-commerce boutique de móveis de luxo. SPA React + TypeScript com Supabase como backend (auth, banco PostgreSQL, storage).
+**Luar Móveis** — e-commerce boutique de móveis de luxo. SPA React + TypeScript com API Java (Servlets + JDBC + PostgreSQL).
 
 ## Commands
 
@@ -30,9 +30,9 @@ No test or lint scripts are configured.
 
 `apps/web/src/store/LojaContext.tsx` é o coração do app. Um único contexto global gerencia tudo:
 
-- **Produtos, depoimentos, secoesHome** — carregados do Supabase no mount
+- **Produtos, depoimentos, secoesHome** — carregados da API Java no mount
 - **Carrinho** — estado local (client-side only); `totalItensCarrinho` e `subtotalCarrinho` são `useMemo`
-- **Auth** — `supabase.auth.onAuthStateChange` sincroniza `usuarioLogado`, `tipoUsuario`, `isAdmin`
+- **Auth** — sessão HTTP na API Java (`/api/auth/me`); `usuarioLogado`, `tipoUsuario`, `isAdmin`
 - **modoEdicao** — flag que habilita edição in-place de conteúdo (admin CMS)
 
 Qualquer componente que precise de dados usa `useContext(LojaContext)` — não há Redux, Zustand nem prop-drilling.
@@ -51,23 +51,17 @@ Todas as rotas são filhas de `ClassicLayout` (Header + Footer + `<Outlet />`):
 /admin          → AdminPage (dashboard CMS)
 ```
 
-### Supabase Integration
+### API Java
 
-`apps/web/src/lib/supabase.ts` exporta o client singleton. Credenciais em `apps/web/.env.local`:
+Serviços em `apps/web/src/services/` usam `apiFetch` (cookie de sessão). Base URL em `apps/web/.env.local`:
 
 ```
-VITE_SUPABASE_URL
-VITE_SUPABASE_ANON_KEY
+VITE_API_BASE_URL=http://localhost:8082/luar-api
 ```
 
-**Tabelas principais:**
-- `produtos` — catálogo (`destaque_carrossel: boolean` controla o carrossel da home)
-- `usuarios` — perfis linkados ao `auth.users`; `tipo_usuario: 'normal' | 'admin'`
-- `depoimentos` — depoimentos de clientes
-- `secoes_home` — conteúdo editorial da home em JSONB (CMS); 5 seções pré-populadas: `hero`, `manifesto`, `atmosfera`, `curadoria`, `produtos`
-- `pedidos` / `itens_pedido` — estrutura existe no schema mas não está integrada no frontend
+**Endpoints principais:** `produtos`, `pedidos`, `auth`, `depoimentos`, `secoes-home`, `uploads`.
 
-Schema completo em `database/supabase/schema.sql`. Políticas RLS em `database/supabase/policy_usuarios.sql`. Trigger de auth em `database/supabase/trigger_auth.sql`.
+Schema Postgres em `database/java/schema_java_standalone.sql`. API em `apps/api/` (Tomcat). Subir stack: `npm run stack` na raiz.
 
 ### Component Organization
 

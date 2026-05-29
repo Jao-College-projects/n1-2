@@ -25,7 +25,7 @@ export function AuthPage(): JSX.Element {
         navigate("/");
       } else {
         await cadastrar({ email, senha, nomeCompleto });
-        setMensagemSucesso("Cadastro realizado! Verifique seu email se necessário, ou tente fazer login.");
+        setMensagemSucesso("Cadastro realizado! Você já pode fazer login.");
         setIsLogin(true);
       }
     } catch (err: any) {

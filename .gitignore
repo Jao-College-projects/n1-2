@@ -12,3 +12,17 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
+
+# AI / LLM tooling
+CLAUDE.md
+AGENTS.md
+.cursorrules
+.cursorignore
+.aider*
+.copilot
+.claude/
+.cursor/
+.github/copilot-instructions.md
+
+# Docs locais (roteiro, prints, etc.)
+docs/
