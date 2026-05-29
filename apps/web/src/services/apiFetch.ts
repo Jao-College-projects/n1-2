@@ -30,8 +30,22 @@ export function resolveApiAssetUrl(pathOrUrl: string): string {
   if (pathOrUrl.startsWith("http://") || pathOrUrl.startsWith("https://")) {
     return pathOrUrl;
   }
+  if (typeof window !== "undefined") {
+    if (pathOrUrl.startsWith("/")) {
+      return `${window.location.origin}${pathOrUrl}`;
+    }
+    const base = getApiBase();
+    if (base.startsWith("http")) {
+      return `${base}/${pathOrUrl}`;
+    }
+    const prefix = base.startsWith("/") ? base : `/${base}`;
+    return `${window.location.origin}${prefix}/${pathOrUrl}`;
+  }
   const base = getApiBase();
   if (!base) return pathOrUrl;
-  const origin = new URL(base).origin;
-  return pathOrUrl.startsWith("/") ? `${origin}${pathOrUrl}` : `${base}/${pathOrUrl}`;
+  if (base.startsWith("http")) {
+    const origin = new URL(base).origin;
+    return pathOrUrl.startsWith("/") ? `${origin}${pathOrUrl}` : `${base}/${pathOrUrl}`;
+  }
+  return pathOrUrl;
 }

@@ -50,7 +50,8 @@ export function ModalNovoProduto({ isOpen, onClose, produtoParaEditar }: ModalPr
       const url = await uploadFile(file);
       setImagem(url);
     } catch (err) {
-      alert("Erro ao fazer upload da imagem.");
+      const msg = err instanceof Error ? err.message : "Erro ao fazer upload da imagem.";
+      alert(msg);
     } finally {
       setCarregando(false);
     }

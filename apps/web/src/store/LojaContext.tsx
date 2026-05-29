@@ -147,6 +147,24 @@ export function LojaProvider({ children }: { children: React.ReactNode }): JSX.E
     loadData();
   }, []);
 
+  useEffect(() => {
+    async function refreshSessao(): Promise<void> {
+      if (document.visibilityState !== "visible") return;
+      try {
+        const sessao = await buscarSessao();
+        aplicarSessao(sessao, setUsuarioLogado, setTipoUsuario);
+      } catch {
+        /* API indisponível — mantém estado atual */
+      }
+    }
+    window.addEventListener("focus", refreshSessao);
+    document.addEventListener("visibilitychange", refreshSessao);
+    return () => {
+      window.removeEventListener("focus", refreshSessao);
+      document.removeEventListener("visibilitychange", refreshSessao);
+    };
+  }, []);
+
   const selecionarProduto = useCallback((produto: IProduto): void => {
     setProdutoSelecionado(produto);
   }, []);
