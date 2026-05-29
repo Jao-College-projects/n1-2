@@ -383,7 +383,7 @@ Site footer also shows: developer name · course · professor · date.
 ✅ PostgreSQL + SQL script<br/>
 ✅ CORS configured<br/>
 ✅ README + `.gitignore` + commits<br/>
-⬜ Video link (3–5 min) — [add below](#-vídeo)<br/>
+✅ Video link (3–5 min) — [add below](#-vídeo)<br/>
 ⬜ Screenshots in `docs/prints/`
 
 <br/>
@@ -392,7 +392,7 @@ Site footer also shows: developer name · course · professor · date.
 
 | | |
 |:---:|:---:|
-| **Link** | **[ INSERT YOUTUBE / DRIVE URL ]** |
+| **Link** | **[https://youtu.be/_OB54iAlXxc](https://youtu.be/_OB54iAlXxc)** |
 
 Topics: theme · CRUD demo · React↔Java · CORS · Postman
 

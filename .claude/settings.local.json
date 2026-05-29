@@ -7,7 +7,16 @@
       "Bash(xargs grep *)",
       "Bash(xargs wc *)",
       "Bash(xargs -0 grep -l \"TODO\\\\|FIXME\\\\|HACK\")",
-      "Bash(npm install *)"
+      "Bash(npm install *)",
+      "Bash(pdflatex --version)",
+      "Bash(brew list *)",
+      "Bash(java -jar ~/plantuml.jar -version)",
+      "Read(//Library/TeX/texbin/**)",
+      "Read(//usr/local/**)",
+      "Bash(plantuml -tpng diagrama-classes.puml -o .)",
+      "Bash(brew install *)",
+      "Bash(docker info *)",
+      "Bash(open /Users/jao/coding/n1-2/docs/documentacao.pdf)"
     ]
   }
 }
