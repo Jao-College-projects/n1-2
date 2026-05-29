@@ -33,28 +33,13 @@
 
 <img src="https://readme-typing-svg.herokuapp.com?font=Fira+Code&weight=500&size=22&pause=1000&color=CA8A04&center=true&vCenter=true&width=600&lines=Full-stack+com+React+%2B+Java+%2B+PostgreSQL;CRUD+real+persistido+no+banco;Servlets+%2B+JDBC+%2B+CORS" alt="Typing SVG" />
 
-</div>
-
 <br/>
+
+---
 
 ## 📋 Table of Contents
 
-- [About](#-about)
-- [Features](#-features)
-- [Preview](#-preview)
-- [Quick Start](#-quick-start)
-- [Installation](#-installation)
-- [Configuration](#-configuration)
-- [Tech Stack](#-tech-stack)
-- [Architecture](#-architecture)
-- [Database](#-database)
-- [API Reference](#-api-reference)
-- [CORS](#-cors)
-- [Project Structure](#-project-structure)
-- [Academic Info](#-academic-info)
-- [Delivery Checklist](#-delivery-checklist)
-- [Video](#-vídeo)
-- [Acknowledgments](#-acknowledgments)
+[About](#-about) · [Features](#-features) · [Preview](#-preview) · [Quick Start](#-quick-start) · [Installation](#-installation) · [Configuration](#-configuration) · [Tech Stack](#-tech-stack) · [Architecture](#-architecture) · [Database](#-database) · [API Reference](#-api-reference) · [CORS](#-cors) · [Project Structure](#-project-structure) · [Academic Info](#-academic-info) · [Delivery Checklist](#-delivery-checklist) · [Video](#-vídeo) · [Acknowledgments](#-acknowledgments)
 
 <br/>
 
@@ -63,7 +48,7 @@
 > E-commerce editorial para **móveis de alto padrão**. O visitante navega pelo catálogo; o administrador gerencia o acervo com **CRUD completo** — dados no **PostgreSQL**, expostos por **API Java** e consumidos pelo **React** via `fetch`.
 
 | Persona | O que faz |
-|:--------|:----------|
+|:-------:|:---------:|
 | **Visitante** | Home, catálogo, filtros, detalhe, carrinho |
 | **Admin** | Criar · listar · editar · excluir produtos + dashboard |
 | **Avaliação** | Entidade `Produto` com REST + persistência real |
@@ -73,7 +58,7 @@
 ## ✨ Features
 
 | Front-end | Back-end |
-|:----------|:---------|
+|:---------:|:--------:|
 | React 18 + Vite + TypeScript | Java 17 + Servlets |
 | Bootstrap responsivo | JDBC + `ConnectionFactory` |
 | Interfaces `IProduto` | DAO + Model por domínio |
@@ -90,7 +75,7 @@
 > Adicione suas capturas em [`docs/prints/`](docs/prints/) — nomes sugeridos na tabela.
 
 | # | Tela | Arquivo |
-|:-:|------|---------|
+|:-:|:-:|:-------:|
 | 1 | Listagem + dashboard | `01-listagem-dashboard.png` |
 | 2 | Cadastro | `02-cadastro-produto.png` |
 | 3 | Edição | `03-edicao-produto.png` |
@@ -100,20 +85,18 @@
 
 <br/>
 
-<p align="center">
-  <img src="docs/prints/01-listagem-dashboard.png" width="90%" alt="Dashboard e catálogo" />
-  <br /><sub><b>Catálogo</b> — listagem com dashboard de métricas</sub>
-</p>
+<img src="docs/prints/01-listagem-dashboard.png" width="90%" alt="Dashboard e catálogo" />
+<br /><sub><b>Catálogo</b> — listagem com dashboard de métricas</sub>
 
-<p align="center">
-  <img src="docs/prints/02-cadastro-produto.png" width="90%" alt="Cadastro" />
-  <br /><sub><b>CRUD</b> — formulário de cadastro</sub>
-</p>
+<br/>
 
-<p align="center">
-  <img src="docs/prints/05-postman-get.png" width="90%" alt="Postman" />
-  <br /><sub><b>API</b> — GET /api/produtos no Postman</sub>
-</p>
+<img src="docs/prints/02-cadastro-produto.png" width="90%" alt="Cadastro" />
+<br /><sub><b>CRUD</b> — formulário de cadastro</sub>
+
+<br/>
+
+<img src="docs/prints/05-postman-get.png" width="90%" alt="Postman" />
+<br /><sub><b>API</b> — GET /api/produtos no Postman</sub>
 
 <br/>
 
@@ -126,7 +109,7 @@ npm start
 ```
 
 | URL | Endereço |
-|-----|----------|
+|:---:|:--------:|
 | **Front** | http://localhost:5173 |
 | **API** | http://localhost:8082/luar-api |
 | **Admin** | `admin@luar.com` / `admin123` |
@@ -140,7 +123,7 @@ npm start
 <img src="https://skillicons.dev/icons?i=docker,java,postgres,nodejs,git,maven" alt="skills" />
 
 | Ferramenta | Versão |
-|------------|--------|
+|:----------:|:------:|
 | Docker Desktop | latest |
 | JDK | 17+ |
 | Maven | 3.9+ |
@@ -194,7 +177,7 @@ VITE_API_BASE_URL=http://localhost:8082/luar-api
 ```
 
 | Variável (Tomcat / Docker) | Padrão |
-|----------------------------|--------|
+|:--------------------------:|:------:|
 | `JDBC_URL` | `jdbc:postgresql://db-java:5432/luar_java` |
 | `JDBC_USER` / `JDBC_PASSWORD` | `postgres` / `postgres` |
 | Postgres (host) | `localhost:5434` |
@@ -203,16 +186,12 @@ VITE_API_BASE_URL=http://localhost:8082/luar-api
 
 ## 🛠 Tech Stack
 
-<div align="center">
-
 <img src="https://skillicons.dev/icons?i=react,typescript,vite,java,postgres,docker,tomcat,maven" />
-
-</div>
 
 <br/>
 
 | Layer | Stack | Path |
-|:-----:|:------|:-----|
+|:-----:|:-----:|:----:|
 | **UI** | React · TypeScript · Bootstrap · Framer Motion | `apps/web/` |
 | **API** | Jakarta Servlets · Gson · JDBC | `apps/api/` |
 | **DB** | PostgreSQL 16 | `database/java/` |
@@ -250,7 +229,7 @@ flowchart TB
 <br />
 
 | Path | Role |
-|------|------|
+|:----:|:----:|
 | `apps/web/src/pages/` | Route pages |
 | `apps/web/src/components/` | Reusable UI |
 | `apps/web/src/store/LojaContext.tsx` | Global state |
@@ -271,7 +250,7 @@ flowchart TB
 ### Table `produtos` (graded entity)
 
 | Column | Type | Description |
-|:-------|:-----|:------------|
+|:------:|:----:|:-----------:|
 | `id` | `SERIAL` | Primary key |
 | `nome` | `VARCHAR(255)` | Product name |
 | `categoria` | `VARCHAR(150)` | Room / category |
@@ -299,7 +278,7 @@ psql -h localhost -p 5434 -U postgres -d luar_java \
 ### Products (CRUD)
 
 | | Method | Endpoint | Auth |
-|:-:|--------|----------|:----:|
+|:-:|:-:|:--------:|:----:|
 | 📄 | `GET` | `/api/produtos` | public |
 | 📄 | `GET` | `/api/produtos/{id}` | public |
 | ➕ | `POST` | `/api/produtos` | admin |
@@ -326,9 +305,9 @@ psql -h localhost -p 5434 -U postgres -d luar_java \
 
 ### Postman flow
 
-1. `POST /api/auth/login` → `{"email":"admin@luar.com","senha":"admin123"}`
-2. Save cookie **`JSESSIONID`**
-3. Call `POST` / `PUT` / `DELETE` on `/api/produtos`
+**1.** `POST /api/auth/login` → `{"email":"admin@luar.com","senha":"admin123"}`<br/>
+**2.** Save cookie **`JSESSIONID`**<br/>
+**3.** Call `POST` / `PUT` / `DELETE` on `/api/produtos`
 
 ### cURL
 
@@ -351,15 +330,13 @@ curl -b cookies.txt -X POST http://localhost:8082/luar-api/api/produtos \
 ## 🌐 CORS
 
 | Origin | Port |
-|--------|------|
+|:------:|:----:|
 | Vite | `http://localhost:5173` |
 | Tomcat | `http://localhost:8082` |
 
 Cross-origin → browser blocks without headers. Implemented in [`CorsFilter.java`](apps/api/src/main/java/com/luarmoveis/web/CorsFilter.java):
 
-- `Access-Control-Allow-Origin` (echoes React origin)
-- `Access-Control-Allow-Credentials` (session cookie)
-- Methods: `GET, POST, PUT, DELETE, OPTIONS`
+`Access-Control-Allow-Origin` (echoes React origin) · `Access-Control-Allow-Credentials` (session cookie) · Methods: `GET, POST, PUT, DELETE, OPTIONS`
 
 <br/>
 
@@ -385,7 +362,7 @@ n1-2/
 ## 🎓 Academic Info
 
 | | |
-|---|---|
+|:---:|:---:|
 | **Students** | João Pedro *(add teammates)* |
 | **Course** | Desenvolvimento Web |
 | **Professor** | Fernando |
@@ -398,41 +375,30 @@ Site footer also shows: developer name · course · professor · date.
 
 ## ✅ Delivery Checklist
 
-- [x] React + TypeScript + Bootstrap + responsive layout
-- [x] List · create · edit · delete + UI refresh
-- [x] Dashboard / counters
-- [x] Data from Java API (not hardcoded arrays)
-- [x] Servlets + JDBC + `ConnectionFactory`
-- [x] PostgreSQL + SQL script
-- [x] CORS configured
-- [x] README + `.gitignore` + commits
-- [ ] Video link (3–5 min) — [add below](#-vídeo)
-- [ ] Screenshots in `docs/prints/`
+✅ React + TypeScript + Bootstrap + responsive layout<br/>
+✅ List · create · edit · delete + UI refresh<br/>
+✅ Dashboard / counters<br/>
+✅ Data from Java API (not hardcoded arrays)<br/>
+✅ Servlets + JDBC + `ConnectionFactory`<br/>
+✅ PostgreSQL + SQL script<br/>
+✅ CORS configured<br/>
+✅ README + `.gitignore` + commits<br/>
+⬜ Video link (3–5 min) — [add below](#-vídeo)<br/>
+⬜ Screenshots in `docs/prints/`
 
 <br/>
 
 ## 🎥 Vídeo
 
 | | |
-|---|---|
+|:---:|:---:|
 | **Link** | **[ INSERT YOUTUBE / DRIVE URL ]** |
-| **Script** | [`docs/ROTEIRO-VIDEO.md`](docs/ROTEIRO-VIDEO.md) |
 
 Topics: theme · CRUD demo · React↔Java · CORS · Postman
 
 <br/>
 
-## 🙏 Acknowledgments
-
-- Activity 06 extended to full-stack integration
-- Design reference: `design-system/luar-moveis/`
-- [Awesome README](https://github.com/matiassingers/awesome-readme) patterns
-
-<br/>
-
 ---
-
-<div align="center">
 
 **Luar Móveis**
 
@@ -441,9 +407,5 @@ Topics: theme · CRUD demo · React↔Java · CORS · Postman
 <br/>
 
 <img src="https://capsule-render.vercel.app/api?type=waving&color=1C1917&height=80&section=footer&text=Made%20with%20React%20%2B%20Java&fontSize=16&fontColor=CA8A04&animation=fadeIn" width="100%" alt="footer"/>
-
-<br/>
-
-⭐ If this repo helped your studies, consider leaving a star
 
 </div>
